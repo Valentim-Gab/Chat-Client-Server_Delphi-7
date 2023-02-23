@@ -1,0 +1,109 @@
+unit Client;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ScktComp, StdCtrls, Buttons;
+
+type
+  TForm2 = class(TForm)
+    ClientSocket1: TClientSocket;
+    Memo1: TMemo;
+    btnConnect: TButton;
+    btnSendMessage: TButton;
+    Edit1: TEdit;
+    Label1: TLabel;
+    Label2: TLabel;
+    BitBtn1: TBitBtn;
+    procedure btnConnectClick(Sender: TObject);
+    procedure btnSendMessageClick(Sender: TObject);
+    procedure ClientSocket1Disconnect(Sender: TObject;
+      Socket: TCustomWinSocket);
+    procedure ClientSocket1Error(Sender: TObject; Socket: TCustomWinSocket;
+      ErrorEvent: TErrorEvent; var ErrorCode: Integer);
+    procedure ClientSocket1Read(Sender: TObject; Socket: TCustomWinSocket);
+    procedure ClientSocket1Connect(Sender: TObject;
+      Socket: TCustomWinSocket);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure BitBtn1Click(Sender: TObject);
+  private
+    MessageText: string;
+  public
+    { Public declarations }
+  end;
+
+var
+  Form2: TForm2;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm2.btnConnectClick(Sender: TObject);
+begin
+  ClientSocket1.Address := '127.0.0.1';
+  ClientSocket1.Active := True;
+
+  if ClientSocket1.Socket.Connected then
+  begin
+    MessageText := 'Disconnected';
+    ClientSocket1.Active := False;
+    btnConnect.Caption := 'Connect';
+  end
+  else
+    Memo1.Text := Memo1.Text + 'Waiting server...' + #13#10;
+end;
+
+procedure TForm2.btnSendMessageClick(Sender: TObject);
+begin
+  MessageText := Edit1.Text;
+  Memo1.Text := Memo1.Text + 'Me: ' + MessageText + #13#10;
+  Edit1.Text := '';
+  ClientSocket1.Socket.SendText(MessageText);
+end;
+
+procedure TForm2.ClientSocket1Disconnect(Sender: TObject;
+  Socket: TCustomWinSocket);
+begin
+  Memo1.Text := Memo1.Text + 'Disconnect' + #13#10;
+  Socket.SendText(MessageText);
+  btnSendMessage.Enabled := False;
+  Edit1.Enabled := False;
+  btnConnect.Caption := 'Connect';
+end;
+
+procedure TForm2.ClientSocket1Error(Sender: TObject;
+  Socket: TCustomWinSocket; ErrorEvent: TErrorEvent;
+  var ErrorCode: Integer);
+begin
+  ErrorCode := 0;
+  ClientSocket1.Active := False;
+  Memo1.Text := Memo1.Text + 'No connection found' + #13#10;
+end;
+
+procedure TForm2.ClientSocket1Read(Sender: TObject;
+  Socket: TCustomWinSocket);
+begin
+  Memo1.Text := Memo1.Text + 'Server: ' + Socket.ReceiveText + #13#10;
+end;
+
+procedure TForm2.ClientSocket1Connect(Sender: TObject;
+  Socket: TCustomWinSocket);
+begin
+  btnSendMessage.Enabled := True;
+  Edit1.Enabled := True;
+  btnConnect.Caption := 'Disconnect';
+end;
+
+procedure TForm2.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  Application.Terminate;
+end;
+
+procedure TForm2.BitBtn1Click(Sender: TObject);
+begin
+  Memo1.Clear;
+end;
+
+end.
